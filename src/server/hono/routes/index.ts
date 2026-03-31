@@ -16,6 +16,7 @@ import { InitializeService } from "../initialize";
 import { AuthMiddleware } from "../middleware/auth.middleware";
 import { configMiddleware } from "../middleware/config.middleware";
 import { getHonoRuntime } from "../runtime";
+import { artifactRoutes, standaloneArtifactRoutes } from "./artifactRoutes";
 import { authRoutes } from "./authRoutes";
 import { claudeCodeRoutes } from "./claudeCodeRoutes";
 import { featureFlagRoutes } from "./featureFlagRoutes";
@@ -33,6 +34,7 @@ const API_ONLY_ALLOWED_PREFIXES = [
   "/api/claude-code",
   "/api/search",
   "/api/sse",
+  "/api/artifacts",
 ];
 
 const createApiOnlyMiddleware = (apiOnly: boolean) =>
@@ -129,6 +131,8 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
         .route("/api/feature-flags", yield* featureFlagRoutes)
         .route("/api/tasks", yield* tasksRoutes)
         .route("/api/sse", yield* sseRoutes)
+        .route("/api/artifacts", yield* artifactRoutes)
+        .route("", yield* standaloneArtifactRoutes)
     );
   });
 

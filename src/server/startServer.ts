@@ -6,6 +6,8 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Effect, Layer } from "effect";
 import { AgentSessionLayer } from "./core/agent-session";
 import { AgentSessionController } from "./core/agent-session/presentation/AgentSessionController";
+import { ArtifactRepository } from "./core/artifact/infrastructure/ArtifactRepository";
+import { ArtifactController } from "./core/artifact/presentation/ArtifactController";
 import { ClaudeCodeController } from "./core/claude-code/presentation/ClaudeCodeController";
 import { ClaudeCodePermissionController } from "./core/claude-code/presentation/ClaudeCodePermissionController";
 import { ClaudeCodeSessionProcessController } from "./core/claude-code/presentation/ClaudeCodeSessionProcessController";
@@ -114,6 +116,7 @@ const InfraBasics = Layer.mergeAll(
 const InfraRepos = Layer.mergeAll(
   ProjectRepository.Live,
   SessionRepository.Live,
+  ArtifactRepository.Live,
 ).pipe(Layer.provideMerge(InfraBasics));
 
 const InfraLayer = AgentSessionLayer.pipe(Layer.provideMerge(InfraRepos));
@@ -158,6 +161,7 @@ const PresentationLayer = Layer.mergeAll(
   FeatureFlagController.Live,
   SearchController.Live,
   TasksController.Live,
+  ArtifactController.Live,
 );
 
 const MainLayer = PresentationLayer.pipe(
