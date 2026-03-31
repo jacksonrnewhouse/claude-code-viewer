@@ -242,7 +242,13 @@ export const ConversationItem: FC<{
       ) : (
         <ul className="w-full" id={`message-${conversation.uuid}`}>
           {conversation.message.content.map((content, index) => (
-            <li key={typeof content === "object" && "type" in content ? `${content.type}-${index}` : `str-${index}`}>
+            <li
+              key={
+                typeof content === "object" && "type" in content
+                  ? `${content.type}-${index}`
+                  : `str-${index}`
+              }
+            >
               <UserConversationContent content={content} />
             </li>
           ))}
@@ -327,7 +333,11 @@ export const ConversationItem: FC<{
           <ul className="w-full">
             {conversation.message.content.map((content, index) => (
               <li
-                key={content.type === "tool_use" ? content.id : `${content.type}-${index}`}
+                key={
+                  content.type === "tool_use"
+                    ? content.id
+                    : `${content.type}-${index}`
+                }
                 className="[&_.my-4]:my-0.5 [&_.sm\:my-6]:my-0.5 [&_.mb-2]:mb-0.5"
               >
                 <AssistantConversationContent
@@ -376,7 +386,13 @@ export const ConversationItem: FC<{
         )}
         <ul className="w-full">
           {conversation.message.content.map((content, index) => (
-            <li key={content.type === "tool_use" ? content.id : `${content.type}-${index}`}>
+            <li
+              key={
+                content.type === "tool_use"
+                  ? content.id
+                  : `${content.type}-${index}`
+              }
+            >
               <AssistantConversationContent
                 content={content}
                 getToolResult={getToolResult}
