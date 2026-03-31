@@ -1,6 +1,12 @@
 import { Trans } from "@lingui/react";
-import { AlertTriangle, ChevronDown, ExternalLink } from "lucide-react";
-import { type FC, useCallback, useMemo } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Wrench,
+} from "lucide-react";
+import { type FC, useCallback, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Collapsible,
@@ -148,6 +154,64 @@ type ConversationListProps = {
   sessionId: string;
   scheduledJobs: SchedulerJob[];
   isCompact?: boolean;
+};
+
+/**
+ * Returns true if this conversation is an assistant message where every
+ * content block is a tool_use (no text, no thinking).
+ */
+function isToolOnlyAssistant(conv: Conversation | ErrorJsonl): boolean {
+  if (conv.type !== "assistant") return false;
+  const content = conv.message.content;
+  return content.length > 0 && content.every((c) => c.type === "tool_use");
+}
+
+/**
+ * Returns true if this conversation is a user message containing only
+ * tool_result content (the automatic response to tool_use).
+ */
+function isToolResultUser(conv: Conversation | ErrorJsonl): boolean {
+  if (conv.type !== "user") return false;
+  const content = conv.message.content;
+  if (typeof content === "string") return false;
+  return (
+    content.length > 0 &&
+    content.every(
+      (c) => typeof c === "object" && "type" in c && c.type === "tool_result",
+    )
+  );
+}
+
+/**
+ * In compact mode, groups consecutive tool-only assistant messages (and their
+ * interleaved tool_result user messages) into a single collapsed pill.
+ */
+const CompactToolRunGroup: FC<{ count: number; children: React.ReactNode }> = ({
+  count,
+  children,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  return (
+    <li className="w-full flex justify-start animate-in fade-in duration-150">
+      <div className="w-full">
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors cursor-pointer"
+        >
+          <Wrench className="h-2.5 w-2.5" />
+          <span className="font-medium">{count}</span>
+          <ChevronRight
+            className={cn(
+              "h-2.5 w-2.5 transition-transform",
+              isExpanded && "rotate-90",
+            )}
+          />
+        </button>
+        {isExpanded && <ul className="w-full mt-1">{children}</ul>}
+      </div>
+    </li>
+  );
 };
 
 export const ConversationList: FC<ConversationListProps> = ({
@@ -361,103 +425,184 @@ export const ConversationList: FC<ConversationListProps> = ({
     });
   }, [conversations, shouldRenderConversation]);
 
+  // In compact mode, pre-group consecutive tool-only conversations
+  const groupedItems = useMemo(() => {
+    if (!isCompact) return null; // not used in normal mode
+
+    type Item =
+      | {
+          kind: "single";
+          conversation: Conversation | ErrorJsonl;
+          showTimestamp: boolean;
+        }
+      | {
+          kind: "tool-run";
+          conversations: (Conversation | ErrorJsonl)[];
+          toolCount: number;
+        };
+
+    const items: Item[] = [];
+    let currentToolRun: (Conversation | ErrorJsonl)[] = [];
+    let toolCount = 0;
+
+    const flushToolRun = () => {
+      if (currentToolRun.length > 0) {
+        items.push({
+          kind: "tool-run",
+          conversations: [...currentToolRun],
+          toolCount,
+        });
+        currentToolRun = [];
+        toolCount = 0;
+      }
+    };
+
+    for (const { conversation, showTimestamp } of conversationsWithTimestamp) {
+      if (isToolOnlyAssistant(conversation) || isToolResultUser(conversation)) {
+        currentToolRun.push(conversation);
+        if (conversation.type === "assistant") {
+          toolCount += conversation.message.content.filter(
+            (c) => c.type === "tool_use",
+          ).length;
+        }
+      } else {
+        flushToolRun();
+        items.push({ kind: "single", conversation, showTimestamp });
+      }
+    }
+    flushToolRun();
+
+    return items;
+  }, [conversationsWithTimestamp, isCompact]);
+
+  const renderConversationLi = (
+    conversation: Conversation | ErrorJsonl,
+    showTimestamp: boolean,
+  ) => {
+    if (!shouldRenderConversation(conversation)) {
+      if (conversation.type === "x-error") {
+        return (
+          <SchemaErrorDisplay
+            key={`error_${conversation.line}`}
+            errorLine={conversation.line}
+          />
+        );
+      }
+      return null;
+    }
+
+    if (conversation.type === "x-error") {
+      return (
+        <SchemaErrorDisplay
+          key={`error_${conversation.line}`}
+          errorLine={conversation.line}
+        />
+      );
+    }
+
+    const elm = (
+      <ConversationItem
+        key={getConversationKey(conversation)}
+        conversation={conversation}
+        getToolResult={getToolResult}
+        getAgentIdForToolUse={getAgentIdForToolUse}
+        getTurnDuration={getTurnDuration}
+        isRootSidechain={isRootSidechain}
+        getSidechainConversations={getSidechainConversations}
+        getSidechainConversationByAgentId={getSidechainConversationByAgentId}
+        getSidechainConversationByPrompt={getSidechainConversationByPrompt}
+        existsRelatedTaskCall={existsRelatedTaskCall}
+        projectId={projectId}
+        sessionId={sessionId}
+        showTimestamp={showTimestamp}
+        artifactsById={artifactsById}
+        isCompact={isCompact}
+      />
+    );
+
+    const isLocalCommandOutput =
+      conversation.type === "user" &&
+      typeof conversation.message.content === "string" &&
+      parseUserMessage(conversation.message.content).kind === "local-command";
+
+    const isSidechain =
+      conversation.type !== "summary" &&
+      conversation.type !== "file-history-snapshot" &&
+      conversation.type !== "queue-operation" &&
+      conversation.type !== "progress" &&
+      conversation.type !== "custom-title" &&
+      conversation.type !== "agent-name" &&
+      conversation.type !== "pr-link" &&
+      conversation.type !== "last-prompt" &&
+      conversation.isSidechain;
+
+    return (
+      <li
+        className={cn(
+          "w-full flex",
+          isCompact
+            ? "justify-start animate-in fade-in duration-150"
+            : cn(
+                isSidechain ||
+                  isLocalCommandOutput ||
+                  conversation.type === "assistant" ||
+                  conversation.type === "system" ||
+                  conversation.type === "summary"
+                  ? "justify-start"
+                  : "justify-end",
+                "animate-in fade-in slide-in-from-bottom-2 duration-300",
+              ),
+        )}
+        key={getConversationKey(conversation)}
+      >
+        <div
+          className={
+            isCompact
+              ? "w-full"
+              : "w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]"
+          }
+        >
+          {elm}
+        </div>
+      </li>
+    );
+  };
+
+  // Compact mode: use grouped items with tool run collapsing
+  if (isCompact && groupedItems) {
+    return (
+      <>
+        <ul>
+          {groupedItems.map((item, idx) => {
+            if (item.kind === "tool-run") {
+              return (
+                <CompactToolRunGroup
+                  // biome-ignore lint/suspicious/noArrayIndexKey: group order is stable
+                  key={`tool-run-${idx}`}
+                  count={item.toolCount}
+                >
+                  {item.conversations.map((conv) =>
+                    renderConversationLi(conv, false),
+                  )}
+                </CompactToolRunGroup>
+              );
+            }
+            return renderConversationLi(item.conversation, item.showTimestamp);
+          })}
+        </ul>
+        <ScheduledMessageNotice scheduledJobs={scheduledJobs} />
+      </>
+    );
+  }
+
+  // Normal mode
   return (
     <>
       <ul>
         {conversationsWithTimestamp.flatMap(
           ({ conversation, showTimestamp }) => {
-            if (!shouldRenderConversation(conversation)) {
-              if (conversation.type === "x-error") {
-                return (
-                  <SchemaErrorDisplay
-                    key={`error_${conversation.line}`}
-                    errorLine={conversation.line}
-                  />
-                );
-              }
-              return [];
-            }
-
-            if (conversation.type === "x-error") {
-              return (
-                <SchemaErrorDisplay
-                  key={`error_${conversation.line}`}
-                  errorLine={conversation.line}
-                />
-              );
-            }
-
-            const elm = (
-              <ConversationItem
-                key={getConversationKey(conversation)}
-                conversation={conversation}
-                getToolResult={getToolResult}
-                getAgentIdForToolUse={getAgentIdForToolUse}
-                getTurnDuration={getTurnDuration}
-                isRootSidechain={isRootSidechain}
-                getSidechainConversations={getSidechainConversations}
-                getSidechainConversationByAgentId={
-                  getSidechainConversationByAgentId
-                }
-                getSidechainConversationByPrompt={
-                  getSidechainConversationByPrompt
-                }
-                existsRelatedTaskCall={existsRelatedTaskCall}
-                projectId={projectId}
-                sessionId={sessionId}
-                showTimestamp={showTimestamp}
-                artifactsById={artifactsById}
-                isCompact={isCompact}
-              />
-            );
-
-            const isLocalCommandOutput =
-              conversation.type === "user" &&
-              typeof conversation.message.content === "string" &&
-              parseUserMessage(conversation.message.content).kind ===
-                "local-command";
-
-            const isSidechain =
-              conversation.type !== "summary" &&
-              conversation.type !== "file-history-snapshot" &&
-              conversation.type !== "queue-operation" &&
-              conversation.type !== "progress" &&
-              conversation.type !== "custom-title" &&
-              conversation.type !== "agent-name" &&
-              conversation.type !== "pr-link" &&
-              conversation.type !== "last-prompt" &&
-              conversation.isSidechain;
-
-            return [
-              <li
-                className={cn(
-                  "w-full flex",
-                  isCompact
-                    ? "justify-start animate-in fade-in duration-150"
-                    : cn(
-                        isSidechain ||
-                          isLocalCommandOutput ||
-                          conversation.type === "assistant" ||
-                          conversation.type === "system" ||
-                          conversation.type === "summary"
-                          ? "justify-start"
-                          : "justify-end",
-                        "animate-in fade-in slide-in-from-bottom-2 duration-300",
-                      ),
-                )}
-                key={getConversationKey(conversation)}
-              >
-                <div
-                  className={
-                    isCompact
-                      ? "w-full"
-                      : "w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]"
-                  }
-                >
-                  {elm}
-                </div>
-              </li>,
-            ];
+            const li = renderConversationLi(conversation, showTimestamp);
+            return li ? [li] : [];
           },
         )}
       </ul>
