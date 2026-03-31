@@ -580,7 +580,14 @@ const SessionPageMainContent: FC<
           className="flex-1 overflow-y-auto min-h-0 min-w-0"
           data-testid="scrollable-content"
         >
-          <main className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 relative min-w-0 pb-4">
+          <main
+            className={cn(
+              "w-full relative min-w-0",
+              isCompact
+                ? "px-2 pb-1"
+                : "px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pb-4",
+            )}
+          >
             <ConversationList
               conversations={isExistingSession ? conversations : []}
               getToolResult={getToolResult}

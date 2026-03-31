@@ -432,20 +432,28 @@ export const ConversationList: FC<ConversationListProps> = ({
               <li
                 className={cn(
                   "w-full flex",
-                  isSidechain ||
-                    isLocalCommandOutput ||
-                    conversation.type === "assistant" ||
-                    conversation.type === "system" ||
-                    conversation.type === "summary"
-                    ? "justify-start"
-                    : "justify-end",
                   isCompact
-                    ? "animate-in fade-in duration-150"
-                    : "animate-in fade-in slide-in-from-bottom-2 duration-300",
+                    ? "justify-start animate-in fade-in duration-150"
+                    : cn(
+                        isSidechain ||
+                          isLocalCommandOutput ||
+                          conversation.type === "assistant" ||
+                          conversation.type === "system" ||
+                          conversation.type === "summary"
+                          ? "justify-start"
+                          : "justify-end",
+                        "animate-in fade-in slide-in-from-bottom-2 duration-300",
+                      ),
                 )}
                 key={getConversationKey(conversation)}
               >
-                <div className="w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]">
+                <div
+                  className={
+                    isCompact
+                      ? "w-full"
+                      : "w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]"
+                  }
+                >
                   {elm}
                 </div>
               </li>,

@@ -81,25 +81,19 @@ const CompactToolCallGroup: FC<{
   sessionId,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const toolNames = items.map((item) => item.name).join(", ");
 
   return (
-    <div className="my-0.5">
+    <div>
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/20 transition-colors"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors cursor-pointer"
       >
-        <Wrench className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-        <span className="font-medium text-foreground">
-          {items.length} tool call{items.length !== 1 ? "s" : ""}
-        </span>
-        <span className="text-muted-foreground truncate flex-1">
-          {toolNames}
-        </span>
+        <Wrench className="h-2.5 w-2.5" />
+        <span className="font-medium">{items.length}</span>
         <ChevronRight
           className={cn(
-            "h-3.5 w-3.5 text-muted-foreground transition-transform flex-shrink-0",
+            "h-2.5 w-2.5 transition-transform",
             isExpanded && "rotate-90",
           )}
         />
@@ -374,13 +368,25 @@ export const ConversationItem: FC<{
     return conversation.isMeta === true ? (
       // 展開可能にしてデフォで非展開
       <MetaConversationContent>
-        <div className="flex flex-col w-full">
+        <div
+          className={cn(
+            "flex flex-col w-full",
+            isCompact &&
+              "compact-content [&_.mb-5]:mb-1 [&_.py-3]:py-1 [&_.mb-3]:mb-1",
+          )}
+        >
           {timestamp}
           {userConversationJsx}
         </div>
       </MetaConversationContent>
     ) : (
-      <div className="flex flex-col w-full">
+      <div
+        className={cn(
+          "flex flex-col w-full",
+          isCompact &&
+            "compact-content [&_.mb-5]:mb-1 [&_.py-3]:py-1 [&_.mb-3]:mb-1",
+        )}
+      >
         {timestamp}
         {userConversationJsx}
       </div>
@@ -441,7 +447,7 @@ export const ConversationItem: FC<{
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
                 key={groupIndex}
-                className="[&_.w-full.mx-1]:my-1"
+                className="[&_.my-4]:my-0.5 [&_.sm\:my-6]:my-0.5"
               >
                 <AssistantConversationContent
                   content={group.item}
