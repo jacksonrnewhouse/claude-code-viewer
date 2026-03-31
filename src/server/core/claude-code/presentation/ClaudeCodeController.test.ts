@@ -114,6 +114,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -216,6 +217,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -296,6 +298,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -355,6 +358,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: `${testDir}/non-existent`,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -422,6 +426,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -506,6 +511,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: `${testDir}/skills`,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );
@@ -624,6 +630,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           claudeCommandsDirPath: globalCommandsDir,
           claudeSkillsDirPath: globalSkillsDir,
           claudeProjectsDirPath: `${testDir}/projects`,
+          artifactsDirPath: `${testDir}/artifacts`,
         }),
       }),
     );

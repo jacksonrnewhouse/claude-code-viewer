@@ -30,6 +30,7 @@ export const testPlatformLayer = (overrides?: {
       claudeCommandsDirPath: resolve(claudeDirForTest, "commands"),
       claudeSkillsDirPath: resolve(claudeDirForTest, "skills"),
       claudeProjectsDirPath: resolve(claudeDirForTest, "projects"),
+      artifactsDirPath: resolve(claudeDirForTest, "artifacts"),
       ...overrides?.claudeCodePaths,
     }),
   });
