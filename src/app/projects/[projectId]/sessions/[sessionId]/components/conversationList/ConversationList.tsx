@@ -11,6 +11,7 @@ import { useSessionArtifacts } from "@/hooks/useArtifacts";
 import type { Conversation } from "@/lib/conversation-schema";
 import type { ToolResultContent } from "@/lib/conversation-schema/content/ToolResultContentSchema";
 import { calculateDuration } from "@/lib/date/formatDuration";
+import { cn } from "@/lib/utils";
 import { parseUserMessage } from "@/server/core/claude-code/functions/parseUserMessage";
 import type { SchedulerJob } from "@/server/core/scheduler/schema";
 import type { ErrorJsonl } from "../../../../../../../server/core/types";
@@ -146,6 +147,7 @@ type ConversationListProps = {
   projectId: string;
   sessionId: string;
   scheduledJobs: SchedulerJob[];
+  isCompact?: boolean;
 };
 
 export const ConversationList: FC<ConversationListProps> = ({
@@ -154,6 +156,7 @@ export const ConversationList: FC<ConversationListProps> = ({
   projectId,
   sessionId,
   scheduledJobs,
+  isCompact = false,
 }) => {
   const { artifactsById } = useSessionArtifacts(projectId, sessionId);
 
@@ -404,6 +407,7 @@ export const ConversationList: FC<ConversationListProps> = ({
                 sessionId={sessionId}
                 showTimestamp={showTimestamp}
                 artifactsById={artifactsById}
+                isCompact={isCompact}
               />
             );
 
@@ -426,15 +430,19 @@ export const ConversationList: FC<ConversationListProps> = ({
 
             return [
               <li
-                className={`w-full flex ${
+                className={cn(
+                  "w-full flex",
                   isSidechain ||
-                  isLocalCommandOutput ||
-                  conversation.type === "assistant" ||
-                  conversation.type === "system" ||
-                  conversation.type === "summary"
+                    isLocalCommandOutput ||
+                    conversation.type === "assistant" ||
+                    conversation.type === "system" ||
+                    conversation.type === "summary"
                     ? "justify-start"
-                    : "justify-end"
-                } animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                    : "justify-end",
+                  isCompact
+                    ? "animate-in fade-in duration-150"
+                    : "animate-in fade-in slide-in-from-bottom-2 duration-300",
+                )}
                 key={getConversationKey(conversation)}
               >
                 <div className="w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]">

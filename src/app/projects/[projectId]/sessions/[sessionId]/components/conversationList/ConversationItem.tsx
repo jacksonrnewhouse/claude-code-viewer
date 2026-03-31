@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react";
-import type { FC } from "react";
+import { ChevronRight, Wrench } from "lucide-react";
+import { type FC, useState } from "react";
 import type {
   Conversation,
   SidechainConversation,
@@ -8,6 +9,7 @@ import type { ToolResultContent } from "@/lib/conversation-schema/content/ToolRe
 import type { AssistantMessageContent } from "@/lib/conversation-schema/message/AssistantMessageSchema";
 import { formatLocaleDate } from "@/lib/date/formatLocaleDate";
 import type { SupportedLocale } from "@/lib/i18n/schema";
+import { cn } from "@/lib/utils";
 import { parseUserMessage } from "@/server/core/claude-code/functions/parseUserMessage";
 import { ArtifactCard } from "./ArtifactCard";
 import { AssistantConversationContent } from "./AssistantConversationContent";
@@ -18,6 +20,116 @@ import { SummaryConversationContent } from "./SummaryConversationContent";
 import { SystemConversationContent } from "./SystemConversationContent";
 import { TurnDuration } from "./TurnDuration";
 import { UserConversationContent } from "./UserConversationContent";
+
+/**
+ * Groups consecutive tool_use content blocks into runs of tool calls and text/other blocks.
+ */
+type ContentGroup =
+  | {
+      kind: "tool-run";
+      items: (AssistantMessageContent & { type: "tool_use" })[];
+    }
+  | { kind: "other"; item: AssistantMessageContent };
+
+function groupContentForCompact(
+  content: AssistantMessageContent[],
+): ContentGroup[] {
+  const groups: ContentGroup[] = [];
+  let currentToolRun: (AssistantMessageContent & { type: "tool_use" })[] = [];
+
+  const flushToolRun = () => {
+    if (currentToolRun.length > 0) {
+      groups.push({ kind: "tool-run", items: [...currentToolRun] });
+      currentToolRun = [];
+    }
+  };
+
+  for (const block of content) {
+    if (block.type === "tool_use") {
+      currentToolRun.push(block);
+    } else {
+      flushToolRun();
+      groups.push({ kind: "other", item: block });
+    }
+  }
+  flushToolRun();
+
+  return groups;
+}
+
+const CompactToolCallGroup: FC<{
+  items: (AssistantMessageContent & { type: "tool_use" })[];
+  getToolResult: (toolUseId: string) => ToolResultContent | undefined;
+  getAgentIdForToolUse: (toolUseId: string) => string | undefined;
+  getSidechainConversationByAgentId: (
+    agentId: string,
+  ) => SidechainConversation | undefined;
+  getSidechainConversationByPrompt: (
+    prompt: string,
+  ) => SidechainConversation | undefined;
+  getSidechainConversations: (rootUuid: string) => SidechainConversation[];
+  projectId: string;
+  sessionId: string;
+}> = ({
+  items,
+  getToolResult,
+  getAgentIdForToolUse,
+  getSidechainConversationByAgentId,
+  getSidechainConversationByPrompt,
+  getSidechainConversations,
+  projectId,
+  sessionId,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const toolNames = items.map((item) => item.name).join(", ");
+
+  return (
+    <div className="my-0.5">
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/20 transition-colors"
+      >
+        <Wrench className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+        <span className="font-medium text-foreground">
+          {items.length} tool call{items.length !== 1 ? "s" : ""}
+        </span>
+        <span className="text-muted-foreground truncate flex-1">
+          {toolNames}
+        </span>
+        <ChevronRight
+          className={cn(
+            "h-3.5 w-3.5 text-muted-foreground transition-transform flex-shrink-0",
+            isExpanded && "rotate-90",
+          )}
+        />
+      </button>
+      {isExpanded && (
+        <ul className="w-full mt-1">
+          {items.map((item, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
+            <li key={index}>
+              <AssistantConversationContent
+                content={item}
+                getToolResult={getToolResult}
+                getAgentIdForToolUse={getAgentIdForToolUse}
+                getSidechainConversationByAgentId={
+                  getSidechainConversationByAgentId
+                }
+                getSidechainConversationByPrompt={
+                  getSidechainConversationByPrompt
+                }
+                getSidechainConversations={getSidechainConversations}
+                projectId={projectId}
+                sessionId={sessionId}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 export const ConversationItem: FC<{
   conversation: Conversation;
@@ -46,6 +158,7 @@ export const ConversationItem: FC<{
       latestVersion: number;
     }
   >;
+  isCompact?: boolean;
 }> = ({
   conversation,
   getToolResult,
@@ -58,6 +171,7 @@ export const ConversationItem: FC<{
   sessionId,
   showTimestamp = true,
   artifactsById,
+  isCompact = false,
 }) => {
   const { i18n } = useLingui();
   const locale = (i18n.locale as SupportedLocale) || "en";
@@ -248,7 +362,7 @@ export const ConversationItem: FC<{
       );
 
     const timestamp =
-      showTimestamp && conversation.timestamp ? (
+      showTimestamp && !isCompact && conversation.timestamp ? (
         <div className="text-xs text-muted-foreground mb-1 px-1 select-none text-right">
           {formatLocaleDate(conversation.timestamp, {
             locale,
@@ -295,6 +409,72 @@ export const ConversationItem: FC<{
           match = artifactPattern.exec(content.text);
         }
       }
+    }
+
+    if (isCompact) {
+      const groups = groupContentForCompact(conversation.message.content);
+
+      return (
+        <div className="w-full">
+          {groups.map((group, groupIndex) => {
+            if (group.kind === "tool-run") {
+              return (
+                <CompactToolCallGroup
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
+                  key={groupIndex}
+                  items={group.items}
+                  getToolResult={getToolResult}
+                  getAgentIdForToolUse={getAgentIdForToolUse}
+                  getSidechainConversationByAgentId={
+                    getSidechainConversationByAgentId
+                  }
+                  getSidechainConversationByPrompt={
+                    getSidechainConversationByPrompt
+                  }
+                  getSidechainConversations={getSidechainConversations}
+                  projectId={projectId}
+                  sessionId={sessionId}
+                />
+              );
+            }
+            return (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
+                key={groupIndex}
+                className="[&_.w-full.mx-1]:my-1"
+              >
+                <AssistantConversationContent
+                  content={group.item}
+                  getToolResult={getToolResult}
+                  getAgentIdForToolUse={getAgentIdForToolUse}
+                  getSidechainConversationByAgentId={
+                    getSidechainConversationByAgentId
+                  }
+                  getSidechainConversationByPrompt={
+                    getSidechainConversationByPrompt
+                  }
+                  getSidechainConversations={getSidechainConversations}
+                  projectId={projectId}
+                  sessionId={sessionId}
+                />
+              </div>
+            );
+          })}
+          {referencedArtifacts.map((artifact) => (
+            <ArtifactCard
+              key={artifact.id}
+              id={artifact.id}
+              title={artifact.title}
+              type={artifact.type}
+              summary={artifact.summary}
+              latestVersion={artifact.latestVersion}
+            />
+          ))}
+          {turnDuration !== undefined && (
+            <TurnDuration durationMs={turnDuration} />
+          )}
+        </div>
+      );
     }
 
     return (

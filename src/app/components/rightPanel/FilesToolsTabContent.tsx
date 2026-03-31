@@ -11,6 +11,7 @@ import {
   FilterIcon,
   Loader2,
   MessageSquare,
+  PackageIcon,
   TerminalIcon,
   WrenchIcon,
   XCircle,
@@ -31,6 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useSessionArtifacts } from "@/hooks/useArtifacts";
 import { agentSessionListQuery, agentSessionQuery } from "@/lib/api/queries";
 import { extractAllEditedFiles, extractToolCalls } from "@/lib/file-viewer";
 import { extractLatestTodos } from "@/lib/todo-viewer";
@@ -384,6 +386,12 @@ export const FilesToolsTabContent: FC<FilesToolsTabContentProps> = ({
   sessionId,
 }) => {
   const { conversations } = useSession(projectId, sessionId);
+  const { artifactsById } = useSessionArtifacts(projectId, sessionId);
+  const artifacts = useMemo(
+    () => Array.from(artifactsById.values()),
+    [artifactsById],
+  );
+  const hasArtifacts = artifacts.length > 0;
   const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
   const [openAgentId, setOpenAgentId] = useState<string | null>(null);
 
@@ -471,7 +479,7 @@ export const FilesToolsTabContent: FC<FilesToolsTabContentProps> = ({
     setSelectedTools(new Set());
   };
 
-  if (!hasEditedFiles && !hasToolCalls && !hasAgentSessions) {
+  if (!hasEditedFiles && !hasToolCalls && !hasAgentSessions && !hasArtifacts) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-1 flex items-center justify-center p-8">
@@ -632,6 +640,44 @@ export const FilesToolsTabContent: FC<FilesToolsTabContentProps> = ({
                   firstMessage={agent.firstMessage}
                   onClick={() => handleOpenAgent(agent.agentId)}
                 />
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {/* Artifacts Section */}
+        {hasArtifacts && (
+          <CollapsibleSection
+            title="Artifacts"
+            count={artifacts.length}
+            icon={<PackageIcon className="w-3.5 h-3.5" />}
+            stickyTop={
+              (hasEditedFiles ? sectionHeaderHeight : 0) +
+              (hasToolCalls ? sectionHeaderHeight : 0) +
+              (hasAgentSessions ? sectionHeaderHeight : 0)
+            }
+          >
+            <div className="space-y-0.5">
+              {artifacts.map((artifact) => (
+                <a
+                  key={artifact.id}
+                  href={`/artifacts/${artifact.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-accent rounded-md transition-colors"
+                >
+                  <PackageIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <span className="truncate text-left flex-1">
+                    {artifact.title}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/70 flex-shrink-0 bg-muted/50 px-1.5 py-0.5 rounded">
+                    {artifact.type}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/70 flex-shrink-0">
+                    v{artifact.latestVersion}
+                  </span>
+                  <ExternalLinkIcon className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                </a>
               ))}
             </div>
           </CollapsibleSection>

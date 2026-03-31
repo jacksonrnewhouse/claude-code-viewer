@@ -1,12 +1,13 @@
 import { Trans } from "@lingui/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import {
   CopyIcon,
   DownloadIcon,
   EllipsisVertical as EllipsisVerticalIcon,
   GitBranchIcon,
+  ListCollapseIcon,
   LoaderIcon,
   MessageSquareIcon,
   PauseIcon,
@@ -34,6 +35,7 @@ import { usePermissionRequests } from "@/hooks/usePermissionRequests";
 import { useSchedulerJobs } from "@/hooks/useScheduler";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { honoClient } from "@/lib/api/client";
+import { compactViewAtom } from "@/lib/atoms/compactView";
 import { formatLocaleDate } from "@/lib/date/formatLocaleDate";
 import { cn } from "@/lib/utils";
 import { parseUserMessage } from "@/server/core/claude-code/functions/parseUserMessage";
@@ -105,6 +107,7 @@ const SessionPageMainContent: FC<
   const { data: projectData } = useProject(projectId);
   const sessionProcesses = useAtomValue(sessionProcessesAtom);
   const { config } = useConfig();
+  const [isCompact, setIsCompact] = useAtom(compactViewAtom);
   const sessions = projectData.pages.flatMap((page) => page.sessions);
 
   const hasLocalCommandOutput = useMemo(
@@ -535,6 +538,20 @@ const SessionPageMainContent: FC<
                   </PopoverContent>
                 </Popover>
               )}
+              {isExistingSession && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex-shrink-0 h-7 w-7 p-0",
+                    isCompact && "bg-muted text-foreground",
+                  )}
+                  aria-label="Toggle compact view"
+                  onClick={() => setIsCompact(!isCompact)}
+                >
+                  <ListCollapseIcon className="w-4 h-4" />
+                </Button>
+              )}
               {statusBadge && (
                 <Badge
                   variant="secondary"
@@ -570,6 +587,7 @@ const SessionPageMainContent: FC<
               projectId={projectId}
               sessionId={sessionId ?? ""}
               scheduledJobs={sessionScheduledJobs}
+              isCompact={isCompact}
             />
             {!isExistingSession && (
               <div className="space-y-6">
