@@ -2,8 +2,26 @@ import { FileSystem, Path } from "@effect/platform";
 import { Context, Effect, Layer } from "effect";
 import type { InferEffect } from "../../../lib/effect/types";
 import { ApplicationContext } from "../../platform/services/ApplicationContext";
+import { decodeProjectId } from "../../project/functions/id";
 import { parseManifest } from "../functions/parseManifest";
 import type { Artifact, ArtifactVersion } from "../types";
+
+/**
+ * Extract the directory basename from an encoded project ID.
+ * Encoded project IDs decode to full paths like "/root/.claude/projects/-workspaces-foo".
+ * The artifacts directory uses just the basename: "-workspaces-foo".
+ * If the ID is already a plain directory name (not base64), return it as-is.
+ */
+function projectIdToArtifactDir(projectId: string): string {
+  try {
+    const decoded = decodeProjectId(projectId);
+    // If decoding produced a path, take the last segment
+    const segments = decoded.split("/").filter(Boolean);
+    return segments[segments.length - 1] ?? projectId;
+  } catch {
+    return projectId;
+  }
+}
 
 const LayerImpl = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -13,9 +31,10 @@ const LayerImpl = Effect.gen(function* () {
   const getArtifactsForSession = (projectId: string, sessionId: string) =>
     Effect.gen(function* () {
       const { artifactsDirPath } = yield* context.claudeCodePaths;
+      const artifactDir = projectIdToArtifactDir(projectId);
       const manifestPath = pathService.resolve(
         artifactsDirPath,
-        projectId,
+        artifactDir,
         sessionId,
         "manifest.jsonl",
       );
@@ -127,9 +146,10 @@ const LayerImpl = Effect.gen(function* () {
   ) =>
     Effect.gen(function* () {
       const { artifactsDirPath } = yield* context.claudeCodePaths;
+      const artifactDir = projectIdToArtifactDir(projectId);
       const fullPath = pathService.resolve(
         artifactsDirPath,
-        projectId,
+        artifactDir,
         sessionId,
         artifactId,
         `v${String(version)}`,

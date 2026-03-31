@@ -264,7 +264,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        78
+        80
       ]
     ],
     "translation": "Thinking"
@@ -346,7 +346,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        176
+        178
       ]
     ],
     "translation": "Input Parameters"
@@ -462,7 +462,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        190
+        192
       ]
     ],
     "translation": "Tool Result"
@@ -507,7 +507,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        168
+        170
       ]
     ],
     "translation": "Tool ID"

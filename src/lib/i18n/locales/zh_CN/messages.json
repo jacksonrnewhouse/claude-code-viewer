@@ -264,7 +264,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        78
+        80
       ]
     ],
     "translation": "思考中"
@@ -346,7 +346,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        176
+        178
       ]
     ],
     "translation": "输入参数"
@@ -462,7 +462,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        190
+        192
       ]
     ],
     "translation": "工具结果"
@@ -507,7 +507,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        168
+        170
       ]
     ],
     "translation": "工具 ID"
