@@ -63,7 +63,10 @@ export const startServer = async (options: CliOptions) => {
     );
 
     honoApp.use("*", async (c, next) => {
-      if (c.req.path.startsWith("/api")) {
+      if (
+        c.req.path.startsWith("/api") ||
+        c.req.path.startsWith("/artifacts/")
+      ) {
         return next();
       }
 
