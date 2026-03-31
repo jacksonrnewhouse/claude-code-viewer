@@ -26,6 +26,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -381,6 +382,124 @@ const AgentSessionItem: FC<{
   );
 };
 
+const ArtifactSidebarItem: FC<{
+  id: string;
+  title: string;
+  type: string;
+  latestVersion: number;
+  entryPoint: string;
+}> = ({ id, title, type, latestVersion, entryPoint }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const isMarkdown = entryPoint.endsWith(".md");
+  const fileUrl = `/api/artifacts/files/${id}/v/${latestVersion}/${entryPoint}`;
+  const standaloneUrl = `/artifacts/${id}`;
+
+  return (
+    <div className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-accent rounded-md transition-colors">
+      <PackageIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+      <span className="truncate text-left flex-1">{title}</span>
+      <span className="text-[10px] text-muted-foreground/70 flex-shrink-0 bg-muted/50 px-1.5 py-0.5 rounded">
+        {type}
+      </span>
+      {latestVersion > 1 && (
+        <span className="text-[10px] text-muted-foreground/70 flex-shrink-0">
+          v{latestVersion}
+        </span>
+      )}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              aria-label="Preview artifact"
+            >
+              <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] md:w-[90vw] lg:w-[85vw] max-w-[1400px] h-[85vh] max-h-[85vh] flex flex-col p-0">
+            <DialogHeader className="px-6 py-3 border-b bg-muted/30">
+              <div className="flex items-center gap-3">
+                <PackageIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <DialogTitle className="text-sm font-semibold truncate">
+                    {title}
+                  </DialogTitle>
+                  <DialogDescription className="text-xs flex items-center gap-2">
+                    <span>{type}</span>
+                    <span className="text-muted-foreground">|</span>
+                    <span>v{latestVersion}</span>
+                  </DialogDescription>
+                </div>
+                <a
+                  href={standaloneUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ExternalLinkIcon className="h-3.5 w-3.5" />
+                  New tab
+                </a>
+              </div>
+            </DialogHeader>
+            <div className="flex-1 min-h-0">
+              {isMarkdown ? (
+                <MarkdownArtifactPreview url={fileUrl} />
+              ) : (
+                <iframe
+                  src={fileUrl}
+                  title={title}
+                  sandbox="allow-scripts allow-same-origin"
+                  className="w-full h-full border-0"
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+        <a href={standaloneUrl} target="_blank" rel="noopener noreferrer">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            aria-label="Open in new tab"
+          >
+            <ExternalLinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
+          </Button>
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const MarkdownArtifactPreview: FC<{ url: string }> = ({ url }) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["artifact-preview", url],
+    queryFn: async () => {
+      const response = await fetch(url);
+      return response.text();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-auto p-6">
+      <div
+        className="prose prose-sm max-w-none"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown rendering
+        dangerouslySetInnerHTML={{ __html: data ?? "" }}
+      />
+    </div>
+  );
+};
+
 export const FilesToolsTabContent: FC<FilesToolsTabContentProps> = ({
   projectId,
   sessionId,
@@ -659,25 +778,14 @@ export const FilesToolsTabContent: FC<FilesToolsTabContentProps> = ({
           >
             <div className="space-y-0.5">
               {artifacts.map((artifact) => (
-                <a
+                <ArtifactSidebarItem
                   key={artifact.id}
-                  href={`/artifacts/${artifact.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-accent rounded-md transition-colors"
-                >
-                  <PackageIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-                  <span className="truncate text-left flex-1">
-                    {artifact.title}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/70 flex-shrink-0 bg-muted/50 px-1.5 py-0.5 rounded">
-                    {artifact.type}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/70 flex-shrink-0">
-                    v{artifact.latestVersion}
-                  </span>
-                  <ExternalLinkIcon className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-                </a>
+                  id={artifact.id}
+                  title={artifact.title}
+                  type={artifact.type}
+                  latestVersion={artifact.latestVersion}
+                  entryPoint={artifact.entryPoint}
+                />
               ))}
             </div>
           </CollapsibleSection>
