@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ArtifactsRouteImport } from './routes/artifacts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as ProjectsProjectIdSessionRouteImport } from './routes/projects/$projectId/session'
@@ -17,6 +18,11 @@ import { Route as ProjectsProjectIdSessionRouteImport } from './routes/projects/
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtifactsRoute = ArtifactsRouteImport.update({
+  id: '/artifacts',
+  path: '/artifacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -38,12 +44,14 @@ const ProjectsProjectIdSessionRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/artifacts': typeof ArtifactsRoute
   '/login': typeof LoginRoute
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$projectId/session': typeof ProjectsProjectIdSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/artifacts': typeof ArtifactsRoute
   '/login': typeof LoginRoute
   '/projects': typeof ProjectsIndexRoute
   '/projects/$projectId/session': typeof ProjectsProjectIdSessionRoute
@@ -51,18 +59,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/artifacts': typeof ArtifactsRoute
   '/login': typeof LoginRoute
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$projectId/session': typeof ProjectsProjectIdSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/projects/' | '/projects/$projectId/session'
+  fullPaths:
+    | '/'
+    | '/artifacts'
+    | '/login'
+    | '/projects/'
+    | '/projects/$projectId/session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/projects' | '/projects/$projectId/session'
+  to:
+    | '/'
+    | '/artifacts'
+    | '/login'
+    | '/projects'
+    | '/projects/$projectId/session'
   id:
     | '__root__'
     | '/'
+    | '/artifacts'
     | '/login'
     | '/projects/'
     | '/projects/$projectId/session'
@@ -70,6 +90,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArtifactsRoute: typeof ArtifactsRoute
   LoginRoute: typeof LoginRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
   ProjectsProjectIdSessionRoute: typeof ProjectsProjectIdSessionRoute
@@ -82,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artifacts': {
+      id: '/artifacts'
+      path: '/artifacts'
+      fullPath: '/artifacts'
+      preLoaderRoute: typeof ArtifactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -110,6 +138,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArtifactsRoute: ArtifactsRoute,
   LoginRoute: LoginRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
   ProjectsProjectIdSessionRoute: ProjectsProjectIdSessionRoute,

@@ -2,6 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { honoClient } from "@/lib/api/client";
 
+export const allArtifactsQuery = () => ({
+  queryKey: ["artifacts", "all"],
+  queryFn: async () => {
+    const response = await honoClient.api.artifacts.$get();
+    if (!response.ok) {
+      throw new Error(`Failed to fetch artifacts: ${response.statusText}`);
+    }
+    return await response.json();
+  },
+});
+
+export const useAllArtifacts = () => {
+  return useQuery(allArtifactsQuery());
+};
+
+type AllArtifactsQueryFn = ReturnType<typeof allArtifactsQuery>["queryFn"];
+type AllArtifactsResponse = Awaited<ReturnType<AllArtifactsQueryFn>>;
+export type AllArtifact = AllArtifactsResponse["artifacts"][number];
+
 export const sessionArtifactsQuery = (
   projectId: string,
   sessionId: string,
