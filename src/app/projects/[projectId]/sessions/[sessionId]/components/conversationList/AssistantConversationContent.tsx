@@ -55,9 +55,11 @@ export const AssistantConversationContent: FC<{
   const { resolvedTheme } = useTheme();
   const syntaxTheme = resolvedTheme === "dark" ? oneDark : oneLight;
   if (content.type === "text") {
+    // Strip [artifact:<id>] tags — the ConversationItem renders these as embedded cards
+    const displayText = content.text.replace(/\s*\[artifact:[a-f0-9]+\]/g, "");
     return (
       <div className="w-full mx-1 sm:mx-2 my-4 sm:my-6">
-        <MarkdownContent content={content.text} />
+        <MarkdownContent content={displayText} />
       </div>
     );
   }

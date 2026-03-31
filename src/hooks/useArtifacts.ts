@@ -56,13 +56,11 @@ export const useSessionArtifacts = (
     enabled: sessionId !== undefined,
   });
 
-  const artifactsByMessageId = useMemo(() => {
+  const artifactsById = useMemo(() => {
     const map = new Map<string, SessionArtifact>();
     if (query.data?.artifacts) {
       for (const artifact of query.data.artifacts) {
-        if (artifact.messageId) {
-          map.set(artifact.messageId, artifact);
-        }
+        map.set(artifact.id, artifact);
       }
     }
     return map;
@@ -70,6 +68,6 @@ export const useSessionArtifacts = (
 
   return {
     ...query,
-    artifactsByMessageId,
+    artifactsById,
   };
 };

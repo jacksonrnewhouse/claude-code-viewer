@@ -36,7 +36,7 @@ export const ConversationItem: FC<{
   projectId: string;
   sessionId: string;
   showTimestamp?: boolean;
-  artifactsByMessageId: Map<
+  artifactsById: Map<
     string,
     {
       id: string;
@@ -57,7 +57,7 @@ export const ConversationItem: FC<{
   projectId,
   sessionId,
   showTimestamp = true,
-  artifactsByMessageId,
+  artifactsById,
 }) => {
   const { i18n } = useLingui();
   const locale = (i18n.locale as SupportedLocale) || "en";
@@ -275,7 +275,28 @@ export const ConversationItem: FC<{
 
   if (conversation.type === "assistant") {
     const turnDuration = getTurnDuration(conversation.uuid);
-    const artifact = artifactsByMessageId.get(conversation.uuid);
+
+    // Scan text content for [artifact:<id>] tags
+    const artifactPattern = /\[artifact:([a-f0-9]+)\]/g;
+    const referencedArtifacts: Array<
+      NonNullable<ReturnType<typeof artifactsById.get>>
+    > = [];
+    for (const content of conversation.message.content) {
+      if (content.type === "text") {
+        let match = artifactPattern.exec(content.text);
+        while (match !== null) {
+          const artifactId = match[1];
+          if (artifactId) {
+            const artifact = artifactsById.get(artifactId);
+            if (artifact) {
+              referencedArtifacts.push(artifact);
+            }
+          }
+          match = artifactPattern.exec(content.text);
+        }
+      }
+    }
+
     return (
       <div className="w-full">
         {showTimestamp && conversation.timestamp && (
@@ -307,8 +328,9 @@ export const ConversationItem: FC<{
             </li>
           ))}
         </ul>
-        {artifact && (
+        {referencedArtifacts.map((artifact) => (
           <ArtifactCard
+            key={artifact.id}
             id={artifact.id}
             title={artifact.title}
             type={artifact.type}
@@ -317,7 +339,7 @@ export const ConversationItem: FC<{
             projectId={projectId}
             sessionId={sessionId}
           />
-        )}
+        ))}
         {turnDuration !== undefined && (
           <TurnDuration durationMs={turnDuration} />
         )}

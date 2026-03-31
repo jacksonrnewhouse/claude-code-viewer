@@ -155,7 +155,7 @@ export const ConversationList: FC<ConversationListProps> = ({
   sessionId,
   scheduledJobs,
 }) => {
-  const { artifactsByMessageId } = useSessionArtifacts(projectId, sessionId);
+  const { artifactsById } = useSessionArtifacts(projectId, sessionId);
 
   const validConversations = useMemo(
     () =>
@@ -403,7 +403,7 @@ export const ConversationList: FC<ConversationListProps> = ({
                 projectId={projectId}
                 sessionId={sessionId}
                 showTimestamp={showTimestamp}
-                artifactsByMessageId={artifactsByMessageId}
+                artifactsById={artifactsById}
               />
             );
 
