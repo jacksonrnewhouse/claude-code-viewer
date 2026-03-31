@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react";
-import { ChevronRight, Wrench } from "lucide-react";
-import { type FC, useState } from "react";
+
+import type { FC } from "react";
 import type {
   Conversation,
   SidechainConversation,
@@ -20,111 +20,6 @@ import { SummaryConversationContent } from "./SummaryConversationContent";
 import { SystemConversationContent } from "./SystemConversationContent";
 import { TurnDuration } from "./TurnDuration";
 import { UserConversationContent } from "./UserConversationContent";
-
-/**
- * Groups consecutive tool_use content blocks into runs of tool calls and text/other blocks.
- */
-type ContentGroup =
-  | {
-      kind: "tool-run";
-      items: (AssistantMessageContent & { type: "tool_use" })[];
-    }
-  | { kind: "other"; item: AssistantMessageContent };
-
-function groupContentForCompact(
-  content: AssistantMessageContent[],
-): ContentGroup[] {
-  const groups: ContentGroup[] = [];
-  let currentToolRun: (AssistantMessageContent & { type: "tool_use" })[] = [];
-
-  const flushToolRun = () => {
-    if (currentToolRun.length > 0) {
-      groups.push({ kind: "tool-run", items: [...currentToolRun] });
-      currentToolRun = [];
-    }
-  };
-
-  for (const block of content) {
-    if (block.type === "tool_use") {
-      currentToolRun.push(block);
-    } else {
-      flushToolRun();
-      groups.push({ kind: "other", item: block });
-    }
-  }
-  flushToolRun();
-
-  return groups;
-}
-
-const CompactToolCallGroup: FC<{
-  items: (AssistantMessageContent & { type: "tool_use" })[];
-  getToolResult: (toolUseId: string) => ToolResultContent | undefined;
-  getAgentIdForToolUse: (toolUseId: string) => string | undefined;
-  getSidechainConversationByAgentId: (
-    agentId: string,
-  ) => SidechainConversation | undefined;
-  getSidechainConversationByPrompt: (
-    prompt: string,
-  ) => SidechainConversation | undefined;
-  getSidechainConversations: (rootUuid: string) => SidechainConversation[];
-  projectId: string;
-  sessionId: string;
-}> = ({
-  items,
-  getToolResult,
-  getAgentIdForToolUse,
-  getSidechainConversationByAgentId,
-  getSidechainConversationByPrompt,
-  getSidechainConversations,
-  projectId,
-  sessionId,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors cursor-pointer"
-      >
-        <Wrench className="h-2.5 w-2.5" />
-        <span className="font-medium">{items.length}</span>
-        <ChevronRight
-          className={cn(
-            "h-2.5 w-2.5 transition-transform",
-            isExpanded && "rotate-90",
-          )}
-        />
-      </button>
-      {isExpanded && (
-        <ul className="w-full mt-1">
-          {items.map((item, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
-            <li key={index}>
-              <AssistantConversationContent
-                content={item}
-                getToolResult={getToolResult}
-                getAgentIdForToolUse={getAgentIdForToolUse}
-                getSidechainConversationByAgentId={
-                  getSidechainConversationByAgentId
-                }
-                getSidechainConversationByPrompt={
-                  getSidechainConversationByPrompt
-                }
-                getSidechainConversations={getSidechainConversations}
-                projectId={projectId}
-                sessionId={sessionId}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
 export const ConversationItem: FC<{
   conversation: Conversation;
   getToolResult: (toolUseId: string) => ToolResultContent | undefined;
@@ -346,8 +241,9 @@ export const ConversationItem: FC<{
         />
       ) : (
         <ul className="w-full" id={`message-${conversation.uuid}`}>
+          // biome-ignore lint/suspicious/noArrayIndexKey: content order is
+          static
           {conversation.message.content.map((content, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
             <li key={index}>
               <UserConversationContent content={content} />
             </li>
@@ -418,39 +314,28 @@ export const ConversationItem: FC<{
     }
 
     if (isCompact) {
-      const groups = groupContentForCompact(conversation.message.content);
+      const hasText = conversation.message.content.some(
+        (c) => c.type === "text" && c.text.trim(),
+      );
 
       return (
-        <div className="w-full">
-          {groups.map((group, groupIndex) => {
-            if (group.kind === "tool-run") {
-              return (
-                <CompactToolCallGroup
-                  // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
-                  key={groupIndex}
-                  items={group.items}
-                  getToolResult={getToolResult}
-                  getAgentIdForToolUse={getAgentIdForToolUse}
-                  getSidechainConversationByAgentId={
-                    getSidechainConversationByAgentId
-                  }
-                  getSidechainConversationByPrompt={
-                    getSidechainConversationByPrompt
-                  }
-                  getSidechainConversations={getSidechainConversations}
-                  projectId={projectId}
-                  sessionId={sessionId}
-                />
-              );
-            }
-            return (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
-                key={groupIndex}
-                className="[&_.my-4]:my-0.5 [&_.sm\:my-6]:my-0.5"
+        <div
+          className={cn(
+            "w-full",
+            hasText &&
+              "rounded border border-green-200 bg-green-50/30 px-2 py-0.5 my-0.5",
+          )}
+        >
+          <ul className="w-full">
+            // biome-ignore lint/suspicious/noArrayIndexKey: content order is
+            static
+            {conversation.message.content.map((content, index) => (
+              <li
+                key={index}
+                className="[&_.my-4]:my-0.5 [&_.sm\:my-6]:my-0.5 [&_.mb-2]:mb-0.5"
               >
                 <AssistantConversationContent
-                  content={group.item}
+                  content={content}
                   getToolResult={getToolResult}
                   getAgentIdForToolUse={getAgentIdForToolUse}
                   getSidechainConversationByAgentId={
@@ -463,9 +348,9 @@ export const ConversationItem: FC<{
                   projectId={projectId}
                   sessionId={sessionId}
                 />
-              </div>
-            );
-          })}
+              </li>
+            ))}
+          </ul>
           {referencedArtifacts.map((artifact) => (
             <ArtifactCard
               key={artifact.id}
@@ -494,8 +379,9 @@ export const ConversationItem: FC<{
           </div>
         )}
         <ul className="w-full">
+          // biome-ignore lint/suspicious/noArrayIndexKey: content order is
+          static
           {conversation.message.content.map((content, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: Order is static
             <li key={index}>
               <AssistantConversationContent
                 content={content}
