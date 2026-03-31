@@ -42,13 +42,47 @@ Conventional Commits format: `type: description`
 
 ## Project Overview
 
-Claude Code Viewer reads Claude Code session logs directly from JSONL files (`~/.claude/projects/`) with zero data loss. It's a web-based client built as a CLI tool serving a Vite application.
+Fork of [d-kimuson/claude-code-viewer](https://github.com/d-kimuson/claude-code-viewer) with an integrated artifact system. Claude Code Viewer reads session logs from `~/.claude/projects/` and artifacts from `~/.claude-artifacts/`.
 
 **Core Architecture**:
 - Frontend: Vite + TanStack Router + React 19 + TanStack Query
 - Backend: Hono (standalone server) + Effect-TS (all business logic)
 - Data: Direct JSONL reads with strict Zod validation
 - Real-time: Server-Sent Events (SSE) for live updates
+
+### Artifact System
+
+Artifacts are rich HTML/Markdown pages produced by Claude Code to communicate non-operational information (analysis, proposals, comparisons, explanations). They live in `~/.claude-artifacts/` with a flat directory structure:
+
+```
+~/.claude-artifacts/
+  manifest.jsonl              # single global manifest (append-only JSONL)
+  <artifact-id>/
+    v1/
+      index.html              # or report.md
+    v2/
+      ...
+```
+
+**Key files:**
+- `src/server/core/artifact/` — domain module (schema, types, repository, controller)
+- `src/server/hono/routes/artifactRoutes.ts` — API routes + standalone artifact URLs
+- `src/hooks/useArtifacts.ts` — TanStack Query hooks
+- `src/app/artifacts/` — browse page, viewer component, markdown renderer
+- `src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ArtifactCard.tsx` — inline card in session timeline
+
+**How artifacts link to sessions:**
+- Manifest entries have `project` and `session_id` fields for filtering
+- Inline display: Claude outputs `[artifact:<id>]` in assistant message text. The viewer scans for this pattern in `ConversationItem.tsx` and renders an `ArtifactCard`. The tag is stripped from displayed text in `AssistantConversationContent.tsx`.
+- Standalone URL: `/artifacts/<artifact-id>` serves the HTML directly (bypasses SPA catch-all via check in `startServer.ts`)
+
+**API endpoints:**
+- `GET /api/artifacts` — list all artifacts
+- `GET /api/artifacts/projects/:projectId/sessions/:sessionId` — list session artifacts
+- `GET /api/artifacts/files/:artifactId/v/:version/*` — serve artifact file
+- `GET /artifacts/:artifactId` — standalone HTML view (not under `/api/`)
+
+**Compact view:** Toggle via `ListCollapse` icon in session header. Uses `compactViewAtom` (jotai, persisted to localStorage). Groups consecutive tool-only assistant messages into collapsible pills at the `ConversationList` level. Light green boxes for assistant text messages.
 
 ## Recommended Coding Process
 
@@ -74,11 +108,14 @@ pnpm gatecheck check
 
 ## Key Directory Patterns
 
-- `src/server/hono/route.ts` - Hono API routes definition (all routes defined here)
-- `src/server/core/` - Effect-TS business logic (domain modules: session, project, git, etc.)
-- `src/lib/conversation-schema/` - Zod schemas for JSONL validation
-- `src/testing/layers/` - Reusable Effect test layers (`testPlatformLayer` is the foundation)
-- `src/routes/` - TanStack Router routes
+- `src/server/hono/routes/` — Hono API route definitions (index.ts mounts all routes)
+- `src/server/core/` — Effect-TS business logic (domain modules: session, project, git, artifact, etc.)
+- `src/server/core/artifact/` — Artifact domain: schema.ts, types.ts, infrastructure/ArtifactRepository.ts, presentation/ArtifactController.ts
+- `src/lib/conversation-schema/` — Zod schemas for JSONL validation
+- `src/testing/layers/` — Reusable Effect test layers (`testPlatformLayer` is the foundation)
+- `src/routes/` — TanStack Router routes (file-based routing)
+- `src/app/artifacts/` — Artifacts browse page and viewer components
+- `src/lib/atoms/` — Jotai atoms (compactView, layoutPanels, etc.)
 
 ## Coding Standards
 
@@ -158,7 +195,8 @@ Raw `fetch` and direct requests are prohibited.
 
 ### Data Layer
 
-- **Single Source of Truth**: `~/.claude/projects/*.jsonl`
+- **Sessions**: `~/.claude/projects/*.jsonl` (read-only — Claude Code owns this)
+- **Artifacts**: `~/.claude-artifacts/manifest.jsonl` + `~/.claude-artifacts/<id>/v<N>/` (we own this)
 - **Cache**: `~/.claude-code-viewer/` (invalidated via SSE when source changes)
 - **Validation**: Strict Zod schemas ensure every field is captured
 
@@ -169,5 +207,8 @@ Claude Code processes remain alive in the background (unless aborted), allowing 
 ## Development Tips
 
 1. **Session Logs**: Examine `~/.claude/projects/` JSONL files to understand data structures
-2. **Mock Data**: `mock-global-claude-dir/` contains E2E test mocks (useful reference for schema examples)
-3. **Effect-TS Help**: https://effect.website/llms.txt
+2. **Artifact Manifest**: Examine `~/.claude-artifacts/manifest.jsonl` for artifact entry format
+3. **Mock Data**: `mock-global-claude-dir/` contains E2E test mocks (useful reference for schema examples)
+4. **Effect-TS Help**: https://effect.website/llms.txt
+5. **Node version**: Requires Node >=22. Use `fnm use 22` if system node is older.
+6. **Running locally**: `node dist/main.js --port 3400 --hostname 0.0.0.0` (build first with `pnpm build`)
