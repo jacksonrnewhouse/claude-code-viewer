@@ -9,6 +9,7 @@ import type { AssistantMessageContent } from "@/lib/conversation-schema/message/
 import { formatLocaleDate } from "@/lib/date/formatLocaleDate";
 import type { SupportedLocale } from "@/lib/i18n/schema";
 import { parseUserMessage } from "@/server/core/claude-code/functions/parseUserMessage";
+import { ArtifactCard } from "./ArtifactCard";
 import { AssistantConversationContent } from "./AssistantConversationContent";
 import { FileHistorySnapshotConversationContent } from "./FileHistorySnapshotConversationContent";
 import { MetaConversationContent } from "./MetaConversationContent";
@@ -35,6 +36,16 @@ export const ConversationItem: FC<{
   projectId: string;
   sessionId: string;
   showTimestamp?: boolean;
+  artifactsByMessageId: Map<
+    string,
+    {
+      id: string;
+      title: string;
+      type: string;
+      summary: string | null;
+      latestVersion: number;
+    }
+  >;
 }> = ({
   conversation,
   getToolResult,
@@ -46,6 +57,7 @@ export const ConversationItem: FC<{
   projectId,
   sessionId,
   showTimestamp = true,
+  artifactsByMessageId,
 }) => {
   const { i18n } = useLingui();
   const locale = (i18n.locale as SupportedLocale) || "en";
@@ -263,6 +275,7 @@ export const ConversationItem: FC<{
 
   if (conversation.type === "assistant") {
     const turnDuration = getTurnDuration(conversation.uuid);
+    const artifact = artifactsByMessageId.get(conversation.uuid);
     return (
       <div className="w-full">
         {showTimestamp && conversation.timestamp && (
@@ -294,6 +307,17 @@ export const ConversationItem: FC<{
             </li>
           ))}
         </ul>
+        {artifact && (
+          <ArtifactCard
+            id={artifact.id}
+            title={artifact.title}
+            type={artifact.type}
+            summary={artifact.summary}
+            latestVersion={artifact.latestVersion}
+            projectId={projectId}
+            sessionId={sessionId}
+          />
+        )}
         {turnDuration !== undefined && (
           <TurnDuration durationMs={turnDuration} />
         )}

@@ -7,6 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useSessionArtifacts } from "@/hooks/useArtifacts";
 import type { Conversation } from "@/lib/conversation-schema";
 import type { ToolResultContent } from "@/lib/conversation-schema/content/ToolResultContentSchema";
 import { calculateDuration } from "@/lib/date/formatDuration";
@@ -154,6 +155,8 @@ export const ConversationList: FC<ConversationListProps> = ({
   sessionId,
   scheduledJobs,
 }) => {
+  const { artifactsByMessageId } = useSessionArtifacts(projectId, sessionId);
+
   const validConversations = useMemo(
     () =>
       conversations.filter((conversation) => conversation.type !== "x-error"),
@@ -400,6 +403,7 @@ export const ConversationList: FC<ConversationListProps> = ({
                 projectId={projectId}
                 sessionId={sessionId}
                 showTimestamp={showTimestamp}
+                artifactsByMessageId={artifactsByMessageId}
               />
             );
 
