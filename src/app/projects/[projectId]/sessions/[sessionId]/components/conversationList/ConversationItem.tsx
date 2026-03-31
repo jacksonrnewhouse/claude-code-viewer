@@ -336,8 +336,6 @@ export const ConversationItem: FC<{
             type={artifact.type}
             summary={artifact.summary}
             latestVersion={artifact.latestVersion}
-            projectId={projectId}
-            sessionId={sessionId}
           />
         ))}
         {turnDuration !== undefined && (

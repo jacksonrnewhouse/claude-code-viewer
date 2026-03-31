@@ -24,47 +24,40 @@ const artifactRoutes = Effect.gen(function* () {
   const controller = yield* ArtifactController;
   const runtime = yield* getHonoRuntime;
 
-  return new Hono<HonoContext>()
-    .get("/", async (c) => {
-      const response = await effectToResponse(
-        c,
-        controller.getAllArtifacts().pipe(Effect.provide(runtime)),
-      );
-      return response;
-    })
-    .get("/projects/:projectId/sessions/:sessionId", async (c) => {
-      const projectId = c.req.param("projectId");
-      const sessionId = c.req.param("sessionId");
-      const response = await effectToResponse(
-        c,
-        controller
-          .getArtifactsForSession({ projectId, sessionId })
-          .pipe(Effect.provide(runtime)),
-      );
-      return response;
-    })
-    .get(
-      "/projects/:projectId/sessions/:sessionId/artifacts/:artifactId/v/:version/*",
-      async (c) => {
+  return (
+    new Hono<HonoContext>()
+      // List all artifacts
+      .get("/", async (c) => {
+        const response = await effectToResponse(
+          c,
+          controller.getAllArtifacts().pipe(Effect.provide(runtime)),
+        );
+        return response;
+      })
+      // List artifacts for a specific session
+      .get("/projects/:projectId/sessions/:sessionId", async (c) => {
         const projectId = c.req.param("projectId");
         const sessionId = c.req.param("sessionId");
+        const response = await effectToResponse(
+          c,
+          controller
+            .getArtifactsForSession({ projectId, sessionId })
+            .pipe(Effect.provide(runtime)),
+        );
+        return response;
+      })
+      // Serve artifact file by artifact ID + version
+      .get("/files/:artifactId/v/:version/*", async (c) => {
         const artifactId = c.req.param("artifactId");
         const version = parseInt(c.req.param("version"), 10);
 
-        // Extract the wildcard path after /v/:version/
         const url = new URL(c.req.url);
-        const prefix = `/api/artifacts/projects/${projectId}/sessions/${sessionId}/artifacts/${artifactId}/v/${String(version)}/`;
+        const prefix = `/api/artifacts/files/${artifactId}/v/${String(version)}/`;
         const filePath = url.pathname.slice(prefix.length) || "index.html";
 
         const fileData = await Effect.runPromise(
           controller
-            .getArtifactFile({
-              projectId,
-              sessionId,
-              artifactId,
-              version,
-              filePath,
-            })
+            .getArtifactFile({ artifactId, version, filePath })
             .pipe(Effect.provide(runtime)),
         );
 
@@ -74,44 +67,39 @@ const artifactRoutes = Effect.gen(function* () {
           status: 200,
           headers: { "Content-Type": getContentType(filePath) },
         });
-      },
-    );
+      })
+  );
 });
 
 const standaloneArtifactRoutes = Effect.gen(function* () {
   const controller = yield* ArtifactController;
   const runtime = yield* getHonoRuntime;
 
-  return new Hono<HonoContext>().get(
-    "/artifacts/:projectId/:sessionId/:artifactId",
-    async (c) => {
-      const projectId = c.req.param("projectId");
-      const sessionId = c.req.param("sessionId");
-      const artifactId = c.req.param("artifactId");
+  return new Hono<HonoContext>().get("/artifacts/:artifactId", async (c) => {
+    const artifactId = c.req.param("artifactId");
 
-      const result = await Effect.runPromise(
-        controller
-          .getStandaloneArtifact({ projectId, sessionId, artifactId })
-          .pipe(Effect.provide(runtime)),
-      );
+    const result = await Effect.runPromise(
+      controller
+        .getStandaloneArtifact({ artifactId })
+        .pipe(Effect.provide(runtime)),
+    );
 
-      if (!result.found) {
-        return c.text("Artifact not found", 404);
-      }
+    if (!result.found) {
+      return c.text("Artifact not found", 404);
+    }
 
-      const decoder = new TextDecoder();
-      const html = decoder.decode(result.fileData);
+    const decoder = new TextDecoder();
+    const html = decoder.decode(result.fileData);
 
-      // Inject the overlay script before </body> (will 404 silently until Phase 2)
-      const overlayScript =
-        '<script src="/__viewer__/artifact-overlay.js"></script>';
-      const injectedHtml = html.includes("</body>")
-        ? html.replace("</body>", `${overlayScript}</body>`)
-        : `${html}${overlayScript}`;
+    // Inject the overlay script before </body> (will 404 silently until Phase 2)
+    const overlayScript =
+      '<script src="/__viewer__/artifact-overlay.js"></script>';
+    const injectedHtml = html.includes("</body>")
+      ? html.replace("</body>", `${overlayScript}</body>`)
+      : `${html}${overlayScript}`;
 
-      return c.html(injectedHtml);
-    },
-  );
+    return c.html(injectedHtml);
+  });
 });
 
 export { artifactRoutes, standaloneArtifactRoutes };

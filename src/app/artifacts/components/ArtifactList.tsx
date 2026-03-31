@@ -122,7 +122,7 @@ export const ArtifactList: FC<Props> = ({ artifacts, isLoading, onSelect }) => {
         <div className="space-y-2">
           {filtered.map((artifact) => (
             <button
-              key={`${artifact.projectId}-${artifact.sessionId}-${artifact.id}`}
+              key={`${artifact.project}-${artifact.sessionId}-${artifact.id}`}
               type="button"
               onClick={() => onSelect(artifact)}
               className="w-full text-left rounded-lg border p-4 hover:bg-accent/50 transition-colors"
@@ -151,7 +151,7 @@ export const ArtifactList: FC<Props> = ({ artifacts, isLoading, onSelect }) => {
                       {formatDate(artifact.createdAt)}
                     </span>
                     <span className="truncate max-w-[200px]">
-                      {artifact.projectId}
+                      {artifact.project}
                     </span>
                   </div>
                   {artifact.tags.length > 0 && (

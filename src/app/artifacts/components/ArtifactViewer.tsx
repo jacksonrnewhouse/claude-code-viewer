@@ -11,47 +11,30 @@ import { VersionSelector } from "./VersionSelector";
 
 type Props = {
   artifact: Artifact;
-  projectId: string;
-  sessionId: string;
   onBack?: () => void;
 };
 
 function buildFileUrl(
-  projectId: string,
-  sessionId: string,
   artifactId: string,
   version: number,
   entryPoint: string,
 ): string {
-  return `/api/artifacts/projects/${projectId}/sessions/${sessionId}/artifacts/${artifactId}/v/${version}/${entryPoint}`;
+  return `/api/artifacts/files/${artifactId}/v/${version}/${entryPoint}`;
 }
 
-export const ArtifactViewer: FC<Props> = ({
-  artifact,
-  projectId,
-  sessionId,
-  onBack,
-}) => {
+export const ArtifactViewer: FC<Props> = ({ artifact, onBack }) => {
   const [currentVersion, setCurrentVersion] = useState(artifact.latestVersion);
 
   const isMarkdown = artifact.entryPoint.endsWith(".md");
   const fileUrl = buildFileUrl(
-    projectId,
-    sessionId,
     artifact.id,
     currentVersion,
     artifact.entryPoint,
   );
-  const standaloneUrl = `/artifacts/${projectId}/${sessionId}/${artifact.id}`;
+  const standaloneUrl = `/artifacts/${artifact.id}`;
 
   const { data: markdownContent, isLoading: isMarkdownLoading } = useQuery({
-    queryKey: [
-      "artifact-content",
-      projectId,
-      sessionId,
-      artifact.id,
-      currentVersion,
-    ],
+    queryKey: ["artifact-content", artifact.id, currentVersion],
     queryFn: async () => {
       const response = await fetch(fileUrl);
       return response.text();

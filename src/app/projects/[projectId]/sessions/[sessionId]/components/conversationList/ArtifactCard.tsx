@@ -16,8 +16,6 @@ type ArtifactCardProps = {
   type: string;
   summary: string | null;
   latestVersion: number;
-  projectId: string;
-  sessionId: string;
 };
 
 export const ArtifactCard: FC<ArtifactCardProps> = ({
@@ -26,11 +24,9 @@ export const ArtifactCard: FC<ArtifactCardProps> = ({
   type,
   summary,
   latestVersion,
-  projectId,
-  sessionId,
 }) => {
   const badgeColor = typeColors[type] ?? "bg-gray-100 text-gray-800";
-  const standaloneUrl = `/artifacts/${projectId}/${sessionId}/${id}`;
+  const standaloneUrl = `/artifacts/${id}`;
 
   return (
     <div className="my-2 mx-1 sm:mx-2 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 shadow-sm">

@@ -20,29 +20,15 @@ export type Artifact = {
   entryPoint: string;
   tags: string[];
   summary: string | null;
-  messageId: string | null;
+  project: string | null;
+  sessionId: string | null;
   createdAt: Date;
   latestVersion: number;
   versions: ArtifactVersion[];
-  projectId: string;
-  sessionId: string;
 };
 
 export type ArtifactVersion = {
   version: number;
   createdAt: Date;
-  messageId: string | null;
   changelog: string | null;
-};
-
-export type ArtifactSummary = {
-  id: string;
-  title: string;
-  type: ArtifactType;
-  tags: string[];
-  summary: string | null;
-  createdAt: Date;
-  latestVersion: number;
-  projectId: string;
-  sessionId: string;
 };

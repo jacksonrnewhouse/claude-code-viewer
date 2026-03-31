@@ -31,39 +31,26 @@ const LayerImpl = Effect.gen(function* () {
     });
 
   const getArtifactFile = (params: {
-    projectId: string;
-    sessionId: string;
     artifactId: string;
     version: number;
     filePath: string;
   }) =>
     Effect.gen(function* () {
       return yield* artifactRepository.getArtifactFile(
-        params.projectId,
-        params.sessionId,
         params.artifactId,
         params.version,
         params.filePath,
       );
     });
 
-  const getStandaloneArtifact = (params: {
-    projectId: string;
-    sessionId: string;
-    artifactId: string;
-  }) =>
+  const getStandaloneArtifact = (params: { artifactId: string }) =>
     Effect.gen(function* () {
-      const artifacts = yield* artifactRepository.getArtifactsForSession(
-        params.projectId,
-        params.sessionId,
-      );
-      const artifact = artifacts.find((a) => a.id === params.artifactId);
+      const allArtifacts = yield* artifactRepository.getAllArtifacts();
+      const artifact = allArtifacts.find((a) => a.id === params.artifactId);
       if (!artifact) {
         return { found: false } as const;
       }
       const fileData = yield* artifactRepository.getArtifactFile(
-        params.projectId,
-        params.sessionId,
         params.artifactId,
         artifact.latestVersion,
         artifact.entryPoint,

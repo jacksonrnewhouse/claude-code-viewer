@@ -23,12 +23,7 @@ export const ArtifactsPage: FC = () => {
     return (
       <div className="flex h-screen max-h-screen overflow-hidden">
         <div className="flex-1 overflow-auto">
-          <ArtifactViewer
-            artifact={artifact}
-            projectId={selected.projectId}
-            sessionId={selected.sessionId}
-            onBack={handleBack}
-          />
+          <ArtifactViewer artifact={artifact} onBack={handleBack} />
         </div>
       </div>
     );

@@ -12,7 +12,8 @@ export const artifactTypeSchema = z.enum([
 const baseManifestEntrySchema = z.object({
   id: z.string(),
   created_at: z.string().datetime(),
-  message_id: z.string().optional(),
+  project: z.string().optional(),
+  session_id: z.string().optional(),
 });
 
 export const createManifestEntrySchema = baseManifestEntrySchema.extend({
