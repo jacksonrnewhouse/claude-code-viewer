@@ -7,6 +7,7 @@ import {
   oneDark,
   oneLight,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { MarkdownContent } from "@/app/components/MarkdownContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -198,28 +199,33 @@ export const FileContentDialog: FC<FileContentDialogProps> = ({
               )}
             </div>
           )}
-          {data?.success === true && (
-            <SyntaxHighlighter
-              style={syntaxTheme}
-              language={language}
-              showLineNumbers
-              wrapLines
-              customStyle={{
-                margin: 0,
-                borderRadius: 0,
-                fontSize: "0.75rem",
-                minHeight: "100%",
-              }}
-              lineNumberStyle={{
-                minWidth: "3em",
-                paddingRight: "1em",
-                textAlign: "right",
-                userSelect: "none",
-              }}
-            >
-              {data.content}
-            </SyntaxHighlighter>
-          )}
+          {data?.success === true &&
+            (language === "markdown" ? (
+              <div className="p-6 overflow-auto h-full">
+                <MarkdownContent content={data.content} />
+              </div>
+            ) : (
+              <SyntaxHighlighter
+                style={syntaxTheme}
+                language={language}
+                showLineNumbers
+                wrapLines
+                customStyle={{
+                  margin: 0,
+                  borderRadius: 0,
+                  fontSize: "0.75rem",
+                  minHeight: "100%",
+                }}
+                lineNumberStyle={{
+                  minWidth: "3em",
+                  paddingRight: "1em",
+                  textAlign: "right",
+                  userSelect: "none",
+                }}
+              >
+                {data.content}
+              </SyntaxHighlighter>
+            ))}
         </div>
       </DialogContent>
     </Dialog>
