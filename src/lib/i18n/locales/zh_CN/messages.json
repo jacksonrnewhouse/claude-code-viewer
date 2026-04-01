@@ -279,7 +279,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        185
+        186
       ]
     ],
     "translation": "无法显示二进制文件"
@@ -294,7 +294,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        170
+        171
       ]
     ],
     "translation": "加载文件失败"
@@ -324,7 +324,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        182
+        183
       ]
     ],
     "translation": "文件未找到"
@@ -335,7 +335,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        149
+        150
       ]
     ],
     "translation": "已截断"
@@ -361,7 +361,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        188
+        189
       ]
     ],
     "translation": "无效的文件路径"
@@ -376,7 +376,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        162
+        163
       ]
     ],
     "translation": "正在加载文件..."
@@ -451,7 +451,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        191
+        192
       ]
     ],
     "translation": "读取文件错误"
@@ -481,7 +481,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        173
+        174
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/TaskModal.tsx",
@@ -518,7 +518,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        92
+        93
       ]
     ],
     "translation": "查看文件"

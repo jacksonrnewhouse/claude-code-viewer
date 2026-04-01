@@ -279,7 +279,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        185
+        186
       ]
     ],
     "translation": "Binary file cannot be displayed"
@@ -294,7 +294,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        170
+        171
       ]
     ],
     "translation": "Failed to load file"
@@ -324,7 +324,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        182
+        183
       ]
     ],
     "translation": "File not found"
@@ -335,7 +335,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        149
+        150
       ]
     ],
     "translation": "Truncated"
@@ -361,7 +361,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        188
+        189
       ]
     ],
     "translation": "Invalid file path"
@@ -376,7 +376,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        162
+        163
       ]
     ],
     "translation": "Loading file..."
@@ -451,7 +451,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        191
+        192
       ]
     ],
     "translation": "Error reading file"
@@ -481,7 +481,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        173
+        174
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/TaskModal.tsx",
@@ -518,7 +518,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/FileContentDialog.tsx",
-        92
+        93
       ]
     ],
     "translation": "View File"
